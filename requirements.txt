@@ -75,6 +75,7 @@ notebook==6.4.6
 numba==0.54.1
 numpy==1.20.3
 oauthlib==3.1.1
+opencv-python==4.5.4.58
 opt-einsum==3.3.0
 packaging==21.0
 pandas==1.3.4
@@ -122,7 +123,7 @@ sphinxcontrib-htmlhelp==2.0.0
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.5
--e git+https://github.com/Imrauviel/cell-painting-dashboard@e41999a23ae317def3252fa5196a073c83744fd6#egg=src
+-e git+https://github.com/Imrauviel/cell-painting-dashboard@36cadfee619cee45081368e6e0538aa471fd25c4#egg=src
 tenacity==8.0.1
 tensorboard==2.7.0
 tensorboard-data-server==0.6.1
