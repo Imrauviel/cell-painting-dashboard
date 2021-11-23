@@ -6,15 +6,25 @@ import plotly.graph_objects as go
 import cv2
 
 IMAGE_DIR_PATH = r'../resized_merged_images'
-last_point = None
-temp = {'points': [{'pointIndex': 0}]}
+last_point_index_1 = None
+last_point_index_2 = None
+point_index_in_cache_1 = 0
+
+point_index_in_cache_2 = 0
 
 
-def gen_umap_fig(data: pd.DataFrame):
+def get_index(chosen_point):
+    return chosen_point['points'][0]['pointIndex'] if chosen_point is not None else None
+
+
+def gen_umap_fig(point_index_1=0, point_index_2=1):
     fig = go.Figure(data=go.Scatter(x=data['vector1'],
                                     y=data['vector2'],
                                     mode='markers',
-                                    text=data['name']))
+                                    marker=dict(size=6,
+                                                color='#ff6969'),
+                                    text=data['name'],
+                                    name='All images'))
     fig.update_xaxes(showticklabels=False).update_yaxes(showticklabels=False)
     fig.update_layout(
         plot_bgcolor='#f2f2f2',
@@ -28,27 +38,31 @@ def gen_umap_fig(data: pd.DataFrame):
                    zeroline=False),
         margin=dict(l=0, r=0, b=0, t=0),
     )
-    fig.update_traces(marker=dict(size=5,
-                                  color='#ffd359'))
+
+    x_points = [data['vector1'][point_index_1],
+                data['vector1'][point_index_2]]
+    y_points = [data['vector2'][point_index_1],
+                data['vector2'][point_index_2]]
+    point_names = [data['name'][point_index_1],
+                   data['name'][point_index_2]]
+
+    fig.add_scatter(x=x_points,
+                    y=y_points,
+                    mode='markers',
+                    text=point_names,
+                    name='Selected image',
+                    marker=dict(
+                        size=9,
+                        color="#000000"
+                    ))
     return fig
 
 
-def get_images(choosen_point=None):
-    if choosen_point is None:
-        file_name_1 = image_names[0][0]
-        img1 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_1, cv2.IMREAD_GRAYSCALE)
-        file_name_2 = image_names[1][0]
-        img2 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_2, cv2.IMREAD_GRAYSCALE)
-        return img1, img2, file_name_1, file_name_2
-    global last_point, temp
-    last_point = temp
-    temp = choosen_point
-    ids1 = last_point['points'][0]['pointIndex']
-    file_name_1 = image_names[ids1][0]
+def get_images(point_index_1=0, point_index_2=1):
+    file_name_1 = image_names[point_index_1][0]
     img1 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_1, cv2.IMREAD_GRAYSCALE)
 
-    ids2 = choosen_point['points'][0]['pointIndex']
-    file_name_2 = image_names[ids2][0]
+    file_name_2 = image_names[point_index_2][0]
     img2 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_2, cv2.IMREAD_GRAYSCALE)
     return img1, img2, file_name_1, file_name_2
 
@@ -72,6 +86,16 @@ def get_figure(image_1, image_2, name_1, name_2):
 data = pd.read_csv(r'../data/features.csv')
 image_names = data[['name']].values.tolist()
 img1, img2, file_name_1, file_name_2 = get_images()
+
+
+def create_options(data):
+    options = []
+    for index, name in enumerate(data['name']):
+        options.append({'label': name,
+                        'value': index})
+    return options
+
+
 layout = html.Div([
     html.Div([
 
@@ -81,7 +105,26 @@ layout = html.Div([
     ], className='navbar', id='navbar', style={}),
     html.Div([
         html.Div([
-            dcc.Graph(id='graph', figure=gen_umap_fig(data))
+            dcc.Dropdown(
+                id='dropdown_image_1',
+                options=create_options(data),
+                multi=False,
+                value=0,
+                placeholder="Select first image",
+            ),
+            dcc.Dropdown(
+                id='dropdown_image_2',
+                options=create_options(data),
+                multi=False,
+                value=1,
+                placeholder="Select second image",
+
+            )
+        ], className='dropdowns', style={}),
+        html.Div([
+            dcc.Graph(id='graph', config={
+                "displayModeBar": False,
+            }, figure=gen_umap_fig())
         ], className='middle_side', style={'height': '500px',
                                            'float': 'left',
                                            'width': '50%'}),
@@ -89,7 +132,9 @@ layout = html.Div([
     ], className='main_part', style={}),
     html.Div([
 
-        dcc.Graph(id='image', figure=get_figure(img1, img2, file_name_1, file_name_2))
+        dcc.Graph(id='image', config={
+            "displayModeBar": False,
+        }, figure=get_figure(img1, img2, file_name_1, file_name_2))
 
     ], className='rightside', style={'float': 'left',
                                      'width': '50%',
