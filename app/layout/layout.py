@@ -1,11 +1,12 @@
-from dash import dcc, html
+import dash_core_components as dcc
+import dash_html_components as html
 import plotly.express as px
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import cv2
 
-IMAGE_DIR_PATH = r'../resized_merged_images'
+IMAGE_DIR_PATH = r'../data/processed/resized_merged_images'
 last_point_index_1 = None
 last_point_index_2 = None
 point_index_in_cache_1 = 0
@@ -69,7 +70,7 @@ def get_images(point_index_1=0, point_index_2=1):
 
 def get_figure(image_1, image_2, name_1, name_2):
     fig = px.imshow(np.array([image_1, image_2]), facet_col=0, binary_string=True,
-                    facet_col_spacing=0.02, width=800, height=800, labels={'facet_col': 'Image'},
+                    facet_col_spacing=0.02, width=800, height=400, labels={'facet_col': 'Image'},
                     )
     fig.update_xaxes(showticklabels=False).update_yaxes(showticklabels=False)
     fig.update_traces(hovertemplate=None, hoverinfo='skip')
@@ -111,6 +112,7 @@ layout = html.Div([
                 multi=False,
                 value=0,
                 placeholder="Select first image",
+                className='dropdown-image-1'
             ),
             dcc.Dropdown(
                 id='dropdown_image_2',
@@ -118,33 +120,37 @@ layout = html.Div([
                 multi=False,
                 value=1,
                 placeholder="Select second image",
-
+                className='dropdown-image-2'
             )
         ], className='dropdowns', style={}),
         html.Div([
             dcc.Graph(id='graph', config={
                 "displayModeBar": False,
             }, figure=gen_umap_fig())
-        ], className='middle_side', style={'height': '500px',
-                                           'float': 'left',
-                                           'width': '50%'}),
+        ], className='middle-side', #style={'height': '500px',
+                                           #'float': 'left',
+                                           #'width': '50%'}
+                            ),
 
     ], className='main_part', style={}),
     html.Div([
+        html.Div([
+            dcc.Graph(id='image',  config={
+                "displayModeBar": False,
+            }, figure=get_figure(img1, img2, file_name_1, file_name_2))
+        ], className='img-graph')
 
-        dcc.Graph(id='image', config={
-            "displayModeBar": False,
-        }, figure=get_figure(img1, img2, file_name_1, file_name_2))
 
-    ], className='rightside', style={'float': 'left',
-                                     'width': '50%',
-                                     'height': '1000'}),
+    ], className='right-side', #style={'float': 'left',
+    #                                  'width': '50%',
+    #                                  'height': '1000'}
+                                     ),
     html.Div([
 
     ], className='footer')
 
 ], className='body', style={
     'background-color': '#ebebeb',
-    'margin-left': '60px',
-    'margin-top': '60px'
+    # 'margin-left': '60px',
+    # 'margin-top': '60px'
 })
