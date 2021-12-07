@@ -13,7 +13,7 @@ import umap
 
 import argparse
 
-PATH = r'C:\Users\a829748\Studia\cell-painting-dashboard\resized_merged_images'
+PATH = r'C:\Users\a829748\Studia\cell-painting-dashboard\HepG2_Exp3_Plate1_FX9__2021-04-08T16_16_48'
 
 
 def extract_features(file: str, model: Model):

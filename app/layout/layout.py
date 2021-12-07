@@ -6,13 +6,12 @@ import pandas as pd
 import plotly.graph_objects as go
 import cv2
 
-IMAGE_DIR_PATH = r'../data/processed/resized_merged_images'
+IMAGE_DIR_PATH = r'../data/processed/new'
 last_point_index_1 = None
 last_point_index_2 = None
 point_index_in_cache_1 = 0
 
 point_index_in_cache_2 = 0
-
 
 def get_index(chosen_point):
     return chosen_point['points'][0]['pointIndex'] if chosen_point is not None else None
@@ -61,10 +60,10 @@ def gen_umap_fig(point_index_1=0, point_index_2=1):
 
 def get_images(point_index_1=0, point_index_2=1):
     file_name_1 = image_names[point_index_1][0]
-    img1 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_1, cv2.IMREAD_GRAYSCALE)
+    img1 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_1, cv2.COLOR_RGB2BGR)
 
     file_name_2 = image_names[point_index_2][0]
-    img2 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_2, cv2.IMREAD_GRAYSCALE)
+    img2 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_2, cv2.COLOR_RGB2BGR)
     return img1, img2, file_name_1, file_name_2
 
 
