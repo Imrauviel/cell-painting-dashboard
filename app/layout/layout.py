@@ -1,12 +1,13 @@
-import dash_core_components as dcc
-import dash_html_components as html
+# import dash_core_components as dcc
+# import dash_html_components as html
+from dash import dcc, html
 import plotly.express as px
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import cv2
 
-IMAGE_DIR_PATH = r'../data/processed/resized_merged_images'
+IMAGE_DIR_PATH = r'../new'
 last_point_index_1 = None
 last_point_index_2 = None
 point_index_in_cache_1 = 0
@@ -61,10 +62,10 @@ def gen_umap_fig(point_index_1=0, point_index_2=1):
 
 def get_images(point_index_1=0, point_index_2=1):
     file_name_1 = image_names[point_index_1][0]
-    img1 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_1, cv2.IMREAD_GRAYSCALE)
+    img1 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_1, cv2.COLOR_RGB2BGR)
 
     file_name_2 = image_names[point_index_2][0]
-    img2 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_2, cv2.IMREAD_GRAYSCALE)
+    img2 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_2, cv2.COLOR_RGB2BGR)
     return img1, img2, file_name_1, file_name_2
 
 
