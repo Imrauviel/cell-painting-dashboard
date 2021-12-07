@@ -8,7 +8,7 @@ temp = 1
 app = dash.Dash(__name__)
 app.title = 'Cell app'
 
-IMAGE_DIR_PATH = r'../resized_merged_images'
+IMAGE_DIR_PATH = r'../new'
 first_image_cache = 0
 second_image_cache = 1
 chosen_index_cache = None
@@ -49,5 +49,5 @@ def update_by_scatter(chosen_point, drop_1, drop_2):
 
 app.layout = layout
 if __name__ == '__main__':
-    app.run_server(port=1111, dev_tools_ui=True, debug=True,
+    app.run_server(port=1111, debug=True,
                    dev_tools_hot_reload=True, threaded=True)

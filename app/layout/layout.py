@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import cv2
 
-IMAGE_DIR_PATH = r'../data/processed/resized_merged_images'
+IMAGE_DIR_PATH = r'../new'
 last_point_index_1 = None
 last_point_index_2 = None
 point_index_in_cache_1 = 0
