@@ -1,5 +1,3 @@
-# import dash_core_components as dcc
-# import dash_html_components as html
 from dash import dcc, html
 import plotly.express as px
 import numpy as np
@@ -7,13 +5,12 @@ import pandas as pd
 import plotly.graph_objects as go
 import cv2
 
-IMAGE_DIR_PATH = r'../new'
+IMAGE_DIR_PATH = r'../data/processed/resized_merged_images'
 last_point_index_1 = None
 last_point_index_2 = None
 point_index_in_cache_1 = 0
 
 point_index_in_cache_2 = 0
-
 
 def get_index(chosen_point):
     return chosen_point['points'][0]['pointIndex'] if chosen_point is not None else None
