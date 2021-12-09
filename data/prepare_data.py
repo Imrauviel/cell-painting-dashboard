@@ -30,7 +30,8 @@ def load_data(path: str) -> List[str]:
     os.chdir(path)
     with os.scandir(path) as files:
         for file in files:
-            images.append(file.name)
+            if file.name.endswith('tiff'):
+                images.append(file.name)
     return images
 
 
@@ -59,6 +60,19 @@ def features_preprocess(features_dict: dict):
     return pd.DataFrame({'name': filenames, 'vector1': standard_embedding[:, 0], 'vector2': standard_embedding[:, 1]})
 
 
+def prepare_info_df(df):
+    df['Row'] = df['name'].apply(lambda x: x[1:3]).apply(lambda x: chr(int(x)+64))
+    df['Column'] = df['name'].apply(lambda x: x[4:6])
+    df['F'] = df['name'].apply(lambda x: x[7:9])
+    df['Well'] = df['Row'] + df['Column']
+    for aa in ['ch1', 'ch2', 'ch3', 'ch4']: #here comes the problem
+        df['name'] = df['name'].apply(lambda x: x.replace(aa, ''))
+    df = df.drop_duplicates().reset_index(drop=True)
+    well_df = pd.read_csv('E:\data\Cell-Painting-HepG2-Plate-Layouts.csv', usecols=[0,1,2])
+    df = df.merge(well_df)
+
+    return df
+
 parser = argparse.ArgumentParser(
     description='Generating vectors of features.')
 parser.add_argument('-f', '--features', action='store_true', default=False,
@@ -80,6 +94,9 @@ if __name__ == '__main__':
         file = open(args.features_path, "rb")
         features_dict = pickle.load(file)
     result: pd.DataFrame = features_preprocess(features_dict)
+
+    result = prepare_info_df(result)
+    print(result)
     if args.out:
         result.to_csv(f'{args.out}.csv', index=False)
     else:
