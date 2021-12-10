@@ -5,15 +5,27 @@ import pandas as pd
 import plotly.graph_objects as go
 import cv2
 
-IMAGE_DIR_PATH = r'../new'
+IMAGE_DIR_PATH = r'../HepG2_Exp3_Plate1_FX9__2021-04-08T16_16_48'
 last_point_index_1 = None
 last_point_index_2 = None
 point_index_in_cache_1 = 0
 
 point_index_in_cache_2 = 0
 
+
 def get_index(chosen_point):
     return chosen_point['points'][0]['pointIndex'] if chosen_point is not None else None
+
+
+def merge_images(values, filename):
+    img = np.zeros((1080, 1080))
+    num_of_images = len(values)
+    for value in values:
+        channel = f'-ch{str(value)}s'
+        new = filename.replace('-s', channel)
+        image_channel = cv2.imread(IMAGE_DIR_PATH + '/' + new, cv2.COLOR_RGB2BGR)
+        img += image_channel / num_of_images
+    return img
 
 
 def gen_umap_fig(point_index_1=0, point_index_2=1):
@@ -57,12 +69,16 @@ def gen_umap_fig(point_index_1=0, point_index_2=1):
     return fig
 
 
-def get_images(point_index_1=0, point_index_2=1):
+def get_images(point_index_1=0, point_index_2=1, values=None):
+    if values is None:
+        values = [1, 2, 3, 4]
     file_name_1 = image_names[point_index_1][0]
-    img1 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_1, cv2.COLOR_RGB2BGR)
+    img1 = merge_images(values, file_name_1)
+    # img1 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_1, cv2.COLOR_RGB2BGR)
 
     file_name_2 = image_names[point_index_2][0]
-    img2 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_2, cv2.COLOR_RGB2BGR)
+    img2 = merge_images(values, file_name_2)
+    # img2 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_2, cv2.COLOR_RGB2BGR)
     return img1, img2, file_name_1, file_name_2
 
 
@@ -125,27 +141,39 @@ layout = html.Div([
             dcc.Graph(id='graph', config={
                 "displayModeBar": False,
             }, figure=gen_umap_fig())
-        ], className='middle-side', #style={'height': '500px',
-                                           #'float': 'left',
-                                           #'width': '50%'}
-                            ),
+        ], className='middle-side',  # style={'height': '500px',
+            # 'float': 'left',
+            # 'width': '50%'}
+        ),
 
     ], className='main_part', style={}),
     html.Div([
         html.Div([
-            dcc.Graph(id='image',  config={
+            dcc.Graph(id='image', config={
                 "displayModeBar": False,
             }, figure=get_figure(img1, img2, file_name_1, file_name_2))
         ], className='img-graph')
 
+    ], className='right-side',
+    ),
+    html.Div([dcc.Checklist(
+        id='channel_list',
+        options=[
+            {'label': 'Chanel 1',
+             'value': 1},
+            {'label': 'Chanel 2',
+             'value': 2},
+            {'label': 'Chanel 3',
+             'value': 3},
+            {'label': 'Chanel 4',
+             'value': 4}
+        ],
+        value=[1, 2, 3, 4],
+        labelStyle={'display': 'inline-block'}
+    )
 
-    ], className='right-side', #style={'float': 'left',
-    #                                  'width': '50%',
-    #                                  'height': '1000'}
-                                     ),
-    html.Div([
+    ], className='footer'),
 
-    ], className='footer')
 
 ], className='body', style={
     'background-color': '#ebebeb',
