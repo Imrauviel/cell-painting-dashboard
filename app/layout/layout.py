@@ -28,6 +28,17 @@ def merge_images(values, filename):
     return img
 
 
+def adjust_gamma(image, gamma=0):
+    if gamma == 0:
+        return image
+    image = (255 * image).astype("uint8")
+    invGamma = 1.0 / gamma
+    table = np.array([((i / 255.0) ** invGamma) * 255
+                      for i in np.arange(0, 256)]).astype("uint8")
+    result = cv2.LUT(image, table)
+    return (result.astype(np.float)) / 255
+
+
 def gen_umap_fig(point_index_1=0, point_index_2=1):
     fig = go.Figure(data=go.Scatter(x=data['vector1'],
                                     y=data['vector2'],
@@ -69,16 +80,16 @@ def gen_umap_fig(point_index_1=0, point_index_2=1):
     return fig
 
 
-def get_images(point_index_1=0, point_index_2=1, values=None):
+def get_images(point_index_1=0, point_index_2=1, values=None, gamma=0):
     if values is None:
         values = [1, 2, 3, 4]
     file_name_1 = image_names[point_index_1][0]
     img1 = merge_images(values, file_name_1)
-    # img1 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_1, cv2.COLOR_RGB2BGR)
+    img1 = adjust_gamma(img1, gamma)
 
     file_name_2 = image_names[point_index_2][0]
     img2 = merge_images(values, file_name_2)
-    # img2 = cv2.imread(IMAGE_DIR_PATH + '/' + file_name_2, cv2.COLOR_RGB2BGR)
+    img2 = adjust_gamma(img2, gamma)
     return img1, img2, file_name_1, file_name_2
 
 
@@ -139,7 +150,7 @@ layout = html.Div([
         ], className='dropdowns', style={}),
         html.Div([
             dcc.Graph(id='graph', config={
-                "displayModeBar": False,
+                # "displayModeBar": False,
             }, figure=gen_umap_fig())
         ], className='middle-side',  # style={'height': '500px',
             # 'float': 'left',
@@ -170,10 +181,18 @@ layout = html.Div([
         ],
         value=[1, 2, 3, 4],
         labelStyle={'display': 'inline-block'}
-    )
+    ),
+        dcc.Slider(
+            id='gamma_slider',
+            min=-0.5,
+            max=0.5,
+            step=0.005,
+            value=0,
+            updatemode='drag',
+            tooltip={"placement": "bottom", "always_visible": True},
+        )
 
     ], className='footer'),
-
 
 ], className='body', style={
     'background-color': '#ebebeb',
