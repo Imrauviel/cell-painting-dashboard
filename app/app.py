@@ -1,4 +1,3 @@
-from dash import dash_table
 from dash.dependencies import Input, Output
 import pandas as pd
 from BackendUtilities import BackendUtilities
@@ -26,7 +25,7 @@ chosen_index_cache = None
     [Input('graph', 'selectedData')
      ]
 )
-def get_selected_iamges(selected_points):
+def get_selected_images(selected_points):
     table = app.get_selected_points_info(selected_points)
     return [table]
 
@@ -68,8 +67,7 @@ def update_by_scatter(chosen_point, drop_1, drop_2, values, gamma):
     return fig, scatter_plot, drop_1, drop_2, str(image_model_1)
 
 
-# layout.
-# app.layout = layout
+
 if __name__ == '__main__':
     app.run_server(port=1111, debug=True,
                    dev_tools_hot_reload=True, threaded=True)
