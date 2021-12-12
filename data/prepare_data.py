@@ -61,17 +61,19 @@ def features_preprocess(features_dict: dict):
 
 
 def prepare_info_df(df):
-    df['Row'] = df['name'].apply(lambda x: x[1:3]).apply(lambda x: chr(int(x)+64))
+    df['Row'] = df['name'].apply(lambda x: x[1:3]).apply(lambda x: chr(int(x) + 64))
     df['Column'] = df['name'].apply(lambda x: x[4:6])
     df['F'] = df['name'].apply(lambda x: x[7:9])
     df['Well'] = df['Row'] + df['Column']
-    for aa in ['ch1', 'ch2', 'ch3', 'ch4']: #here comes the problem
-        df['name'] = df['name'].apply(lambda x: x.replace(aa, ''))
+    for cahnel_str in ['ch1', 'ch2', 'ch3', 'ch4']:  # here comes the problem
+        df['name'] = df['name'].apply(lambda x: x.replace(cahnel_str, ''))
     df = df.drop_duplicates().reset_index(drop=True)
-    well_df = pd.read_csv('E:\data\Cell-Painting-HepG2-Plate-Layouts.csv', usecols=[0,1,2])
+    well_df = pd.read_csv(r'C:\Users\a829748\Studia\cell-painting-dashboard\data\CellPainting-info.csv',
+                          usecols=[0, 1, 2])
     df = df.merge(well_df)
 
     return df
+
 
 parser = argparse.ArgumentParser(
     description='Generating vectors of features.')

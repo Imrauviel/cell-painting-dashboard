@@ -1,37 +1,54 @@
-import dash
+from dash import dash_table
 from dash.dependencies import Input, Output
+import pandas as pd
+from BackendUtilities import BackendUtilities
+from models.ImageModel import ImageModel
 
-from layout.layout import layout, get_figure, get_images, gen_umap_fig, get_index
 
+IMAGES = dict()
+IMAGE_DIR_PATH = r'../HepG2_Exp3_Plate1_FX9__2021-04-08T16_16_48'
+csv_data = pd.read_csv(r'../data/features.csv')
+for idx, image_info in csv_data.iterrows():
+    IMAGES[idx] = ImageModel(idx, image_info)
+
+app = BackendUtilities(IMAGES, 'Cell app', IMAGE_DIR_PATH, csv_data)
+app.set_layout()
 last_point = 0
 temp = 1
-app = dash.Dash(__name__)
-app.title = 'Cell app'
 
-IMAGE_DIR_PATH = r'../new'
 first_image_cache = 0
 second_image_cache = 1
 chosen_index_cache = None
 
 
 @app.callback([
+    Output('div_table', 'children')],
+    [Input('graph', 'selectedData')
+     ]
+)
+def get_selected_iamges(selected_points):
+    table = app.get_selected_points_info(selected_points)
+    return [table]
+
+
+@app.callback([
     Output('image', 'figure'),
     Output('graph', 'figure'),
     Output('dropdown_image_1', 'value'),
-    Output('dropdown_image_2', 'value')
+    Output('dropdown_image_2', 'value'),
+    Output('image_info', 'children')
 ]
     ,
     [Input('graph', 'clickData'),
      Input('dropdown_image_1', 'value'),
      Input('dropdown_image_2', 'value'),
      Input('channel_list', 'value'),
-     Input('gamma_slider', 'value'),
-     Input('graph', 'selectedData')]
+     Input('gamma_slider', 'value')
+     ]
 )
-def update_by_scatter(chosen_point, drop_1, drop_2, values, gamma, lasso):
+def update_by_scatter(chosen_point, drop_1, drop_2, values, gamma):
     global second_image_cache, first_image_cache, chosen_index_cache
-    print(lasso)
-    chosen_point_index = get_index(chosen_point)
+    chosen_point_index = app.get_index(chosen_point)
     if first_image_cache != chosen_point_index and \
             chosen_point_index is not None and \
             chosen_index_cache != chosen_point_index:
@@ -39,19 +56,20 @@ def update_by_scatter(chosen_point, drop_1, drop_2, values, gamma, lasso):
         second_image_cache = first_image_cache
         first_image_cache = chosen_point_index
 
-        img1, img2, file_name_1, file_name_2 = get_images(first_image_cache, second_image_cache, values, gamma)
-        fig = get_figure(img1, img2, file_name_1, file_name_2)
-        scatter_plot = gen_umap_fig(first_image_cache, second_image_cache)
-        return fig, scatter_plot, first_image_cache, second_image_cache
+        img1, img2, image_model_1, image_model_2 = app.get_images(first_image_cache, second_image_cache, values, gamma)
+        fig = app.get_image_figure(img1, img2, image_model_1.file_name, image_model_2.file_name)
+        scatter_plot = app.generate_scatter_figure(first_image_cache, second_image_cache)
+        return fig, scatter_plot, first_image_cache, second_image_cache, str(image_model_1)
     second_image_cache = drop_2
     first_image_cache = drop_1
-    img1, img2, file_name_1, file_name_2 = get_images(drop_2, drop_1, values, gamma)
-    fig = get_figure(img2, img1, file_name_2, file_name_1)
-    scatter_plot = gen_umap_fig(drop_1, drop_2)
-    return fig, scatter_plot, drop_1, drop_2
+    img1, img2, image_model_1, image_model_2 = app.get_images(drop_2, drop_1, values, gamma)
+    fig = app.get_image_figure(img2, img1, image_model_2.file_name, image_model_1.file_name)
+    scatter_plot = app.generate_scatter_figure(drop_1, drop_2)
+    return fig, scatter_plot, drop_1, drop_2, str(image_model_1)
 
 
-app.layout = layout
+# layout.
+# app.layout = layout
 if __name__ == '__main__':
     app.run_server(port=1111, debug=True,
                    dev_tools_hot_reload=True, threaded=True)
