@@ -72,9 +72,11 @@ class BackendUtilities(Dash):
             mode='markers',
             hovertext=[self._csv_data['Name'][point_index_2]],
             name='Image 1',
-            marker={'size': 10,
-                    'color': '#4aff89'
-                    }
+            marker=dict(size=12,
+                        color='#ddff00',
+                        line=dict(width=3,
+                                  color='#000000')
+                        )
         )
         figure.add_scatter(
             x=[self._csv_data['Vector1'][point_index_2]],
@@ -82,9 +84,11 @@ class BackendUtilities(Dash):
             mode='markers',
             hovertext=[self._csv_data['Name'][point_index_2]],
             name='Image 2',
-            marker={'size': 10,
-                    'color': '#4af9ff'
-                    }
+            marker=dict(size=12,
+                        color='#00ff11',
+                        line=dict(width=3,
+                                  color='#000000')
+                        )
         )
         return figure
 
@@ -143,7 +147,7 @@ class BackendUtilities(Dash):
                       'concentration']],
             export_format="csv",
             sort_action='native',
-            sort_mode='multi',
+            # sort_mode='multi',
             page_current=0,
             page_size=10,
             filter_action="native",
