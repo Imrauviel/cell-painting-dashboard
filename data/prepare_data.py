@@ -57,21 +57,21 @@ def features_preprocess(features_dict: dict):
     data_after_pca = pca.transform(feat)
     standard_embedding = umap.UMAP(random_state=42).fit_transform(data_after_pca)
 
-    return pd.DataFrame({'name': filenames, 'vector1': standard_embedding[:, 0], 'vector2': standard_embedding[:, 1]})
+    return pd.DataFrame({'Name': filenames, 'Vector1': standard_embedding[:, 0], 'Vector2': standard_embedding[:, 1]})
 
 
 def prepare_info_df(df):
-    df['Row'] = df['name'].apply(lambda x: x[1:3]).apply(lambda x: chr(int(x) + 64))
-    df['Column'] = df['name'].apply(lambda x: x[4:6])
-    df['F'] = df['name'].apply(lambda x: x[7:9])
+    df['Row'] = df['Name'].apply(lambda x: x[1:3]).apply(lambda x: chr(int(x) + 64))
+    df['Column'] = df['Name'].apply(lambda x: x[4:6])
+    df['F'] = df['Name'].apply(lambda x: x[7:9])
     df['Well'] = df['Row'] + df['Column']
     for cahnel_str in ['ch1', 'ch2', 'ch3', 'ch4']:  # here comes the problem
-        df['name'] = df['name'].apply(lambda x: x.replace(cahnel_str, ''))
-    df = df.drop_duplicates().reset_index(drop=True)
+        df['Name'] = df['Name'].apply(lambda x: x.replace(cahnel_str, ''))
+    df = df.drop_duplicates()
     well_df = pd.read_csv(r'C:\Users\a829748\Studia\cell-painting-dashboard\data\CellPainting-info.csv',
                           usecols=[0, 1, 2])
     df = df.merge(well_df)
-
+    df.rename(columns={'Concentration [uM]': 'Concentration'}, inplace=True)
     return df
 
 

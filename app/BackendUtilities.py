@@ -26,15 +26,33 @@ class BackendUtilities(Dash):
             result_image += image_channel / num_of_images
         return result_image
 
-    def generate_scatter_figure(self, point_index_1=0, point_index_2=1) -> go.Figure:
-        figure = go.Figure(data=go.Scatter(x=self._csv_data['vector1'],
-                                           y=self._csv_data['vector2'],
-                                           mode='markers',
-                                           marker=dict(size=6,
-                                                       color='#ff6969'),
-                                           text=self._csv_data['name'],
-                                           name='All images'))
-        figure.update_xaxes(showticklabels=False).update_yaxes(showticklabels=False)
+    def generate_scatter_figure(self, point_index_1=0, point_index_2=1, color_by_group='None') -> go.Figure:
+        if color_by_group != 'None':
+            figure = px.scatter(self._csv_data,
+                                x='Vector1',
+                                y='Vector2',
+                                color=color_by_group,
+                                hover_name='Name',
+                                hover_data={'Compound': True,
+                                            'Concentration': True,
+                                            'Vector1': False,
+                                            'Vector2': False},
+                                color_discrete_sequence=px.colors.qualitative.Bold
+
+                                )
+        else:
+            figure = px.scatter(self._csv_data,
+                                x='Vector1',
+                                y='Vector2',
+                                hover_name='Name',
+                                hover_data={'Compound': True,
+                                            'Concentration': True,
+                                            'Vector1': False,
+                                            'Vector2': False},
+                                color_discrete_sequence=px.colors.qualitative.Bold
+
+                                )
+        figure.update_xaxes(showticklabels=False, visible=False).update_yaxes(showticklabels=False, visible=False)
         figure.update_layout(
             plot_bgcolor='#f2f2f2',
             font_family='Courier New',
@@ -48,22 +66,26 @@ class BackendUtilities(Dash):
             margin=dict(l=0, r=0, b=0, t=0),
         )
 
-        x_points = [self._csv_data['vector1'][point_index_1],
-                    self._csv_data['vector1'][point_index_2]]
-        y_points = [self._csv_data['vector2'][point_index_1],
-                    self._csv_data['vector2'][point_index_2]]
-        point_names = [self._csv_data['name'][point_index_1],
-                       self._csv_data['name'][point_index_2]]
-
-        figure.add_scatter(x=x_points,
-                           y=y_points,
-                           mode='markers',
-                           text=point_names,
-                           name='Selected image',
-                           marker=dict(
-                               size=9,
-                               color="#000000"
-                           ))
+        figure.add_scatter(
+            x=[self._csv_data['Vector1'][point_index_1]],
+            y=[self._csv_data['Vector2'][point_index_1]],
+            mode='markers',
+            hovertext=[self._csv_data['Name'][point_index_2]],
+            name='Image 1',
+            marker={'size': 10,
+                    'color': '#4aff89'
+                    }
+        )
+        figure.add_scatter(
+            x=[self._csv_data['Vector1'][point_index_2]],
+            y=[self._csv_data['Vector2'][point_index_2]],
+            mode='markers',
+            hovertext=[self._csv_data['Name'][point_index_2]],
+            name='Image 2',
+            marker={'size': 10,
+                    'color': '#4af9ff'
+                    }
+        )
         return figure
 
     @staticmethod
@@ -113,26 +135,41 @@ class BackendUtilities(Dash):
         result = cv2.LUT(image, table)
         return result.astype(np.float) / 255
 
-    def get_selected_points_info(self, selected_points: Optional[List[dict]]) -> dash_table.DataTable :
+    def get_selected_points_info(self, selected_points: Optional[List[dict]]) -> dash_table.DataTable:
         table = dash_table.DataTable(
             id='selected_points',
             columns=[{"name": i.capitalize(), "id": i} for i in
                      ['file_name', 'index', 'vector_1', 'vector_2', 'row', 'column', 'f', 'well', 'compound',
                       'concentration']],
+            export_format="csv",
+            sort_action='native',
+            sort_mode='multi',
+            page_current=0,
+            page_size=10,
+            filter_action="native",
+
         )
         if selected_points:
-            #wywalić powtorzenia
+            # TODO wywalić powtorzenia
             selected_points = selected_points['points']
-            objects: List[dict] = [self.images[image['pointIndex']].__dict__ for image in selected_points]
+            objects: List[dict] = [self.images[self.get_index(image)].__dict__ for image in selected_points]
             table.data = objects
         return table
 
-    @staticmethod
-    def get_index(chosen_point: dict) -> Optional[int]:
-        return chosen_point['points'][0]['pointIndex'] if chosen_point is not None else None
+    def get_index(self, chosen_point: dict) -> Optional[int]:
+        file_name: str = chosen_point['hovertext'] if chosen_point is not None else None
+        if file_name:
+            idx = self._csv_data[self._csv_data['Name'] == file_name].index.values.astype(int)[0]
+            return idx
 
     def set_layout(self):
         layout = html.Div([
+            # dcc.Loading(id='main_loading',
+            #                            type='graph',
+            #                            fullscreen=True,
+            #                            color='red',
+            #                            debug=False,
+            #                            children=[
             html.Div([
 
             ], className='header', id='app-header', style={'background': 'gray'}),
@@ -159,24 +196,24 @@ class BackendUtilities(Dash):
                     )
                 ], className='dropdowns', style={}),
                 html.Div([
-                    dcc.Graph(id='graph', config={
-                        # "displayModeBar": False,
-                    })
-                ], className='middle-side',  # style={'height': '500px',
-                    # 'float': 'left',
-                    # 'width': '50%'}
+                    dcc.Graph(id='graph', responsive=True)
+                ], className='middle-side',
                 ),
 
             ], className='main_part', style={}),
-            html.Div([
-                html.Div([
-                    dcc.Graph(id='image', config={
-                        "displayModeBar": False,
-                    })
-                ], className='img-graph')
+            html.Div([dcc.Loading(id='image_loading',
+                                  type='dot',
+                                  fullscreen=False,
+                                  color='red',
+                                  children=[
+                                      html.Div([
+                                          dcc.Graph(id='image', config={
+                                              "displayModeBar": False,
+                                          })
+                                      ], className='img-graph')])
 
-            ], className='right-side',
-            ),
+                      ], className='right-side',
+                     ),
             html.Div([dcc.Checklist(
                 id='channel_list',
                 options=[
@@ -199,16 +236,32 @@ class BackendUtilities(Dash):
                     step=0.005,
                     value=0,
                     updatemode='drag',
-                    tooltip={"placement": "bottom", "always_visible": True},
+                    tooltip={"placement": "bottom",
+                             "always_visible": False},
+                ), dcc.Dropdown(
+                    id='dropdown_color_select',
+                    options=[
+                        {'label': 'None',
+                         'value': 'None'},
+                        {'label': 'Compound',
+                         'value': 'Compound'},
+                        {'label': 'Concentration',
+                         'value': 'Concentration'},
+                    ],
+                    multi=False,
+                    placeholder="Select group color",
+
                 ),
                 html.P(
                     id="image_info"
 
-                ), html.Div(id='div_table',
-                            children=[])
+                ),
+                html.Div(id='div_table',
+                         children=[])
 
             ], className='footer'),
 
+            # ])
         ], className='body', style={
             'background-color': '#ebebeb',
 
