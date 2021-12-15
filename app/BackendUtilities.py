@@ -5,14 +5,18 @@ import plotly.express as px
 import numpy as np
 import pandas as pd
 import cv2
-from dash import dcc, html, dash_table
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+import dash_bootstrap_components as dbc
+import dash_table
 
 from models.ImageModel import ImageModel
 
 
 class BackendUtilities(Dash):
-    def __init__(self, images: Dict, title: str, path: str, csv_data: pd.DataFrame):
-        super().__init__(title=title)
+    def __init__(self, images: Dict, title: str, path: str, csv_data: pd.DataFrame, external_stylesheets):
+        super().__init__(title=title, external_stylesheets=external_stylesheets)
         self.images: Dict = images
         self._image_dir_path: str = path
         self._csv_data: pd.DataFrame = csv_data
@@ -37,8 +41,8 @@ class BackendUtilities(Dash):
                                             'Concentration': True,
                                             'Vector1': False,
                                             'Vector2': False},
-                                color_discrete_sequence=px.colors.qualitative.Bold
-
+                                color_discrete_sequence=px.colors.qualitative.Bold,
+                                # width=729,
                                 )
         else:
             figure = px.scatter(self._csv_data,
@@ -49,7 +53,8 @@ class BackendUtilities(Dash):
                                             'Concentration': True,
                                             'Vector1': False,
                                             'Vector2': False},
-                                color_discrete_sequence=px.colors.qualitative.Bold
+                                color_discrete_sequence=px.colors.qualitative.Bold,
+                                # width=729
 
                                 )
         figure.update_xaxes(showticklabels=False, visible=False).update_yaxes(showticklabels=False, visible=False)
@@ -64,6 +69,7 @@ class BackendUtilities(Dash):
                        showline=False,
                        zeroline=False),
             margin=dict(l=0, r=0, b=0, t=0),
+
         )
 
         figure.add_scatter(
@@ -148,8 +154,8 @@ class BackendUtilities(Dash):
             export_format="csv",
             sort_action='native',
             # sort_mode='multi',
-            page_current=0,
-            page_size=10,
+            # page_current=0,
+            # page_size=10,
             filter_action="native",
 
         )
@@ -174,6 +180,7 @@ class BackendUtilities(Dash):
             #                            color='red',
             #                            debug=False,
             #                            children=[
+
             html.Div([
 
             ], className='header', id='app-header', style={'background': 'gray'}),
@@ -181,85 +188,111 @@ class BackendUtilities(Dash):
 
             ], className='navbar', id='navbar', style={}),
             html.Div([
-                html.Div([
-                    dcc.Dropdown(
-                        id='dropdown_image_1',
-                        options=self.create_options(),
-                        multi=False,
-                        value=0,
-                        placeholder="Select first image",
-                        className='dropdown-image-1'
-                    ),
-                    dcc.Dropdown(
-                        id='dropdown_image_2',
-                        options=self.create_options(),
-                        multi=False,
-                        value=1,
-                        placeholder="Select second image",
-                        className='dropdown-image-2'
-                    )
-                ], className='dropdowns', style={}),
-                html.Div([
-                    dcc.Graph(id='graph', responsive=True)
-                ], className='middle-side',
-                ),
+                dbc.Row([
+                    dbc.Col([
+                        html.Div(
+                            dcc.Dropdown(
+                                id='dropdown_color_select',
+                                options=[
+                                    {'label': 'None',
+                                     'value': 'None'},
+                                    {'label': 'Compound',
+                                     'value': 'Compound'},
+                                    {'label': 'Concentration',
+                                     'value': 'Concentration'},
+                                ],
+                                multi=False,
+                                placeholder="Select group color",
 
-            ], className='main_part', style={}),
-            html.Div([dcc.Loading(id='image_loading',
-                                  type='dot',
-                                  fullscreen=False,
-                                  color='red',
-                                  children=[
-                                      html.Div([
-                                          dcc.Graph(id='image', config={
-                                              "displayModeBar": False,
-                                          })
-                                      ], className='img-graph')])
+                            ), className='dropdown-wrapper',
+                        ),
 
-                      ], className='right-side',
-                     ),
-            html.Div([dcc.Checklist(
-                id='channel_list',
-                options=[
-                    {'label': 'Chanel 1',
-                     'value': 1},
-                    {'label': 'Chanel 2',
-                     'value': 2},
-                    {'label': 'Chanel 3',
-                     'value': 3},
-                    {'label': 'Chanel 4',
-                     'value': 4}
-                ],
-                value=[1, 2, 3, 4],
-                labelStyle={'display': 'inline-block'}
-            ),
-                dcc.Slider(
-                    id='gamma_slider',
-                    min=-0.5,
-                    max=0.5,
-                    step=0.005,
-                    value=0,
-                    updatemode='drag',
-                    tooltip={"placement": "bottom",
-                             "always_visible": False},
-                ), dcc.Dropdown(
-                    id='dropdown_color_select',
-                    options=[
-                        {'label': 'None',
-                         'value': 'None'},
-                        {'label': 'Compound',
-                         'value': 'Compound'},
-                        {'label': 'Concentration',
-                         'value': 'Concentration'},
-                    ],
-                    multi=False,
-                    placeholder="Select group color",
+                        dcc.Graph(id='graph')#, responsive=True)
 
-                ),
-                html.P(
-                    id="image_info"
+                    ], width=6, lg=6, md=12),
 
-                ),
+                    dbc.Col([
+                        html.Div([
+                            dcc.Dropdown(
+                                id='dropdown_image_1',
+                                options=self.create_options(),
+                                multi=False,
+                                value=0,
+                                placeholder="Select first image",
+                                className='dropdown-image-1'
+                            ),
+                            dcc.Dropdown(
+                                id='dropdown_image_2',
+                                options=self.create_options(),
+                                multi=False,
+                                value=1,
+                                placeholder="Select second image",
+                                className='dropdown-image-2'
+                            )
+                        ], className='dropdowns', style={}),
+                        html.Div([
+                            dcc.Loading(id='image_loading',
+                                              type='dot',
+                                              fullscreen=False,
+                                              color='red',
+                                              children=[
+                                                  html.Div([
+                                                      dcc.Graph(id='image', config={
+                                                          "displayModeBar": False,
+                                                      })
+                                                  ], className='img-graph')
+                            ])
+                        ]),
+                        html.Div([
+                            html.P(
+                                id="image_info",
+                                className='image_info'
+                            ),
+                            html.P(
+                                'some text',
+                                id="image_info2",
+                                className='image_info'
+                            ),
+                            # Info about second
+                        ], className='info-wrapper'),
+                        html.Div([
+                            # title gamma correction
+                            dcc.Slider(
+                                id='gamma_slider',
+                                min=0,
+                                max=2,
+                                step=0.05,
+                                value=0,
+                                updatemode='drag',
+                                tooltip={"placement": "bottom",
+                                         "always_visible": False},
+                            ),
+                            # title VISABLE CHannells
+                            dcc.Checklist(
+                                id='channel_list',
+                                options=[
+                                    {'label': ' Cell Nucleus',
+                                     'value': 1},
+                                    {'label': ' Endoplasmic reticulum and Nucleolus',
+                                     'value': 2},
+                                    {'label': ' Cytoskeleton, Golgi apparatus and membrane',
+                                     'value': 3},
+                                    {'label': ' Mitochondrion',
+                                     'value': 4}
+                                ],
+                                value=[1, 2, 3, 4],
+                                labelStyle={'display': 'block'}
+                            ),
+
+                        ], className='image-correction'),
+                    ], width=6, lg=6, md=12),
+                ]),
+
+
+                     #  ], className='right-side',
+                     # ),
+
+
                 html.Div(id='div_table',
                          children=[])
 

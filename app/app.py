@@ -2,15 +2,16 @@ from dash.dependencies import Input, Output
 import pandas as pd
 from BackendUtilities import BackendUtilities
 from models.ImageModel import ImageModel
+import dash_bootstrap_components as dbc
 
 IMAGES = dict()
-IMAGE_DIR_PATH = r'../HepG2_Exp3_Plate1_FX9__2021-04-08T16_16_48'
+IMAGE_DIR_PATH = r'C:\Users\Krul\Documents\GitHub\cell-painting-dashboard\data\processed\HepG2_Exp3_Plate1_FX9__2021-04-08T16_16_48'
 csv_data = pd.read_csv(r'../data/features.csv')
 for idx, image_info in csv_data.iterrows():
     # TODO dodać index
     IMAGES[idx] = ImageModel(idx, image_info)
 
-app = BackendUtilities(IMAGES, 'Cell app', IMAGE_DIR_PATH, csv_data)
+app = BackendUtilities(IMAGES, 'Cell app', IMAGE_DIR_PATH, csv_data, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.set_layout()
 last_point = 0
 temp = 1
