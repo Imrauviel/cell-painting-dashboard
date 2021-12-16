@@ -10,6 +10,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 import dash_table
+from PIL import Image
 
 from models.ImageModel import ImageModel
 
@@ -22,12 +23,26 @@ class BackendUtilities(Dash):
         self._csv_data: pd.DataFrame = csv_data
 
     def merge_images(self, values: List[int], image_model: ImageModel) -> np.array:
+        # print(values)
         result_image = np.zeros((1080, 1080))
         num_of_images = len(values)
         for value in values:
             image_channel = cv2.imread(self._image_dir_path + '/' + image_model.get_channel_image(value),
                                        cv2.COLOR_RGB2BGR)
             result_image += image_channel / num_of_images
+        return result_image
+
+    def merge_images2(self, values: List[int], image_model: ImageModel) -> np.array:
+        channels = []
+        for value in values:
+            channels.append(Image.fromarray(cv2.imread(self._image_dir_path  + '/' + image_model.get_channel_image(value),
+                                            cv2.IMREAD_GRAYSCALE)))
+        for i in [1, 2, 3, 4]:
+            if i not in values:
+                channels.append(Image.fromarray(np.ones((1080, 1080), dtype=np.uint8)))
+
+        result_image = Image.merge("CMYK", (channels[0], channels[1], channels[2], channels[3]))
+        result_image = np.array(result_image.convert('RGB'))
         return result_image
 
     def generate_scatter_figure(self, point_index_1=0, point_index_2=1, color_by_group='None') -> go.Figure:
@@ -119,11 +134,11 @@ class BackendUtilities(Dash):
         if values is None:
             values = [1, 2, 3, 4]
         image_model_1 = self.images[point_index_1]
-        image_1 = self.merge_images(values, image_model_1)
+        image_1 = self.merge_images2(values, image_model_1)
         image_1 = self._adjust_gamma(image_1, gamma)
 
         image_model_2 = self.images[point_index_2]
-        image_2 = self.merge_images(values, image_model_2)
+        image_2 = self.merge_images2(values, image_model_2)
         image_2 = self._adjust_gamma(image_2, gamma)
         return image_1, image_2, image_model_1, image_model_2
 
