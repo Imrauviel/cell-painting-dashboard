@@ -1,4 +1,6 @@
 from typing import List, Optional, Dict, Tuple
+
+from dash import dash_table, html, dcc
 from dash.dash import Dash
 import plotly.graph_objects as go
 import plotly.express as px
@@ -6,10 +8,8 @@ import numpy as np
 import pandas as pd
 import cv2
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
+
 import dash_bootstrap_components as dbc
-import dash_table
 from PIL import Image
 
 from models.ImageModel import ImageModel
@@ -23,7 +23,6 @@ class BackendUtilities(Dash):
         self._csv_data: pd.DataFrame = csv_data
 
     def merge_images(self, values: List[int], image_model: ImageModel) -> np.array:
-        # print(values)
         result_image = np.zeros((1080, 1080))
         num_of_images = len(values)
         for value in values:
