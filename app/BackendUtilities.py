@@ -21,6 +21,7 @@ class BackendUtilities(Dash):
         self.images: Dict = images
         self._image_dir_path: str = path
         self._csv_data: pd.DataFrame = csv_data
+        self._csv_data['Concentration'] = self._csv_data['Concentration'].astype(str)
 
     def merge_images(self, values: List[int], image_model: ImageModel) -> np.array:
         result_image = np.zeros((1080, 1080))
@@ -150,14 +151,16 @@ class BackendUtilities(Dash):
 
     @staticmethod
     def _adjust_gamma(image: np.array, gamma: int = 0) -> np.array:
+        # print()
         if gamma == 0:
             return image
-        image = (255 * image).astype("uint8")
+        # image = (255 * image).astype("uint8")
         inv_gamma = 1.0 / gamma
         table = np.array([((i / 255.0) ** inv_gamma) * 255
                           for i in np.arange(0, 256)]).astype("uint8")
-        result = cv2.LUT(image, table)
-        return result.astype(np.float) / 255
+        return cv2.LUT(image, table)
+        # result = cv2.LUT(image, table)
+        # return result.astype(np.float) #/ 255
 
     def get_selected_points_info(self, selected_points: Optional[List[dict]]) -> dash_table.DataTable:
         table = dash_table.DataTable(

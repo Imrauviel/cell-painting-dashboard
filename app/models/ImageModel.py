@@ -1,5 +1,6 @@
 from typing import Optional
 from pandas.core.series import Series
+import pandas as pd
 import numpy as np
 
 
@@ -14,7 +15,7 @@ class ImageModel:
         self.f: int = data.F
         self.well: str = data.Well
         self.compound: str = data.Compound
-        self.concentration: float = data.Concentration
+        self.concentration: str = str(int(data.Concentration)) if pd.notna(data.Concentration) else str(0)
 
     def get_channel_image(self, number_of_channel: int):
         channel = f'-ch{str(number_of_channel)}s'
