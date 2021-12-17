@@ -21,6 +21,7 @@ class BackendUtilities(Dash):
         self.images: Dict = images
         self._image_dir_path: str = path
         self._csv_data: pd.DataFrame = csv_data
+        self._csv_data['Concentration'] = self._csv_data['Concentration'].astype(str)
 
     def merge_images(self, values: List[int], image_model: ImageModel) -> np.array:
         # print(values)
