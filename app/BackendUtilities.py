@@ -7,7 +7,7 @@ import plotly.express as px
 import numpy as np
 import pandas as pd
 import cv2
-import dash
+from sklearn.cluster import KMeans
 
 import dash_bootstrap_components as dbc
 from PIL import Image
@@ -23,20 +23,12 @@ class BackendUtilities(Dash):
         self._csv_data: pd.DataFrame = csv_data
         self._csv_data['Concentration'] = self._csv_data['Concentration'].astype(str)
 
-    def merge_images(self, values: List[int], image_model: ImageModel) -> np.array:
-        result_image = np.zeros((1080, 1080))
-        num_of_images = len(values)
-        for value in values:
-            image_channel = cv2.imread(self._image_dir_path + '/' + image_model.get_channel_image(value),
-                                       cv2.COLOR_RGB2BGR)
-            result_image += image_channel / num_of_images
-        return result_image
-
     def merge_images2(self, values: List[int], image_model: ImageModel) -> np.array:
         channels = []
         for value in values:
-            channels.append(Image.fromarray(cv2.imread(self._image_dir_path  + '/' + image_model.get_channel_image(value),
-                                            cv2.IMREAD_GRAYSCALE)))
+            channels.append(
+                Image.fromarray(cv2.imread(self._image_dir_path + '/' + image_model.get_channel_image(value),
+                                           cv2.IMREAD_GRAYSCALE)))
         for i in [1, 2, 3, 4]:
             if i not in values:
                 channels.append(Image.fromarray(np.ones((1080, 1080), dtype=np.uint8)))
@@ -47,6 +39,8 @@ class BackendUtilities(Dash):
 
     def generate_scatter_figure(self, point_index_1=0, point_index_2=1, color_by_group='None') -> go.Figure:
         if color_by_group != 'None':
+            if isinstance(color_by_group, int):
+                color_by_group = self._get_k_means(color_by_group)
             figure = px.scatter(self._csv_data,
                                 x='Vector1',
                                 y='Vector2',
@@ -57,7 +51,6 @@ class BackendUtilities(Dash):
                                             'Vector1': False,
                                             'Vector2': False},
                                 color_discrete_sequence=px.colors.qualitative.Bold,
-                                # width=729,
                                 )
         else:
             figure = px.scatter(self._csv_data,
@@ -69,7 +62,6 @@ class BackendUtilities(Dash):
                                             'Vector1': False,
                                             'Vector2': False},
                                 color_discrete_sequence=px.colors.qualitative.Bold,
-                                # width=729
 
                                 )
         figure.update_xaxes(showticklabels=False, visible=False).update_yaxes(showticklabels=False, visible=False)
@@ -94,7 +86,7 @@ class BackendUtilities(Dash):
             hovertext=[self._csv_data['Name'][point_index_2]],
             name='Image 1',
             marker=dict(size=12,
-                        color='#ddff00',
+                        color='#ffffff',
                         line=dict(width=3,
                                   color='#000000')
                         )
@@ -106,7 +98,7 @@ class BackendUtilities(Dash):
             hovertext=[self._csv_data['Name'][point_index_2]],
             name='Image 2',
             marker=dict(size=12,
-                        color='#00ff11',
+                        color='#f7ff0a',
                         line=dict(width=3,
                                   color='#000000')
                         )
@@ -149,9 +141,15 @@ class BackendUtilities(Dash):
                             'value': idx_value})
         return options
 
+    def _get_k_means(self, n_clusters: int) -> Optional[List[str]]:
+        if n_clusters:
+            model = KMeans(n_clusters=n_clusters)
+            X = [[float(x), float(y)] for x, y in zip(self._csv_data['Vector1'], self._csv_data['Vector2'])]
+            results = model.fit(X=X)
+            return [str(i) for i in results.labels_]
+
     @staticmethod
     def _adjust_gamma(image: np.array, gamma: int = 0) -> np.array:
-        # print()
         if gamma == 0:
             return image
         # image = (255 * image).astype("uint8")
@@ -159,8 +157,6 @@ class BackendUtilities(Dash):
         table = np.array([((i / 255.0) ** inv_gamma) * 255
                           for i in np.arange(0, 256)]).astype("uint8")
         return cv2.LUT(image, table)
-        # result = cv2.LUT(image, table)
-        # return result.astype(np.float) #/ 255
 
     def get_selected_points_info(self, selected_points: Optional[List[dict]]) -> dash_table.DataTable:
         table = dash_table.DataTable(
@@ -217,6 +213,20 @@ class BackendUtilities(Dash):
                                      'value': 'Compound'},
                                     {'label': 'Concentration',
                                      'value': 'Concentration'},
+                                    {'label': '2 Clusters',
+                                     'value': 2},
+                                    {'label': '3 Clusters',
+                                     'value': 3},
+                                    {'label': '4 Clusters',
+                                     'value': 4},
+                                    {'label': '5 Clusters',
+                                     'value': 5},
+                                    {'label': '6 Clusters',
+                                     'value': 6},
+                                    {'label': '7 Clusters',
+                                     'value': 7},
+                                    {'label': '8 Clusters',
+                                     'value': 8},
                                 ],
                                 multi=False,
                                 placeholder="Select group color",
@@ -224,7 +234,10 @@ class BackendUtilities(Dash):
                             ), className='dropdown-wrapper',
                         ),
 
-                        dcc.Graph(id='graph')#, responsive=True)
+                        dcc.Graph(id='graph',
+                                  config={"displaylogo": False,
+                                          },
+                                  )
 
                     ], width=6, lg=6, md=12),
 
@@ -249,16 +262,16 @@ class BackendUtilities(Dash):
                         ], className='dropdowns', style={}),
                         html.Div([
                             dcc.Loading(id='image_loading',
-                                              type='dot',
-                                              fullscreen=False,
-                                              color='red',
-                                              children=[
-                                                  html.Div([
-                                                      dcc.Graph(id='image', config={
-                                                          "displayModeBar": False,
-                                                      })
-                                                  ], className='img-graph')
-                            ])
+                                        type='dot',
+                                        fullscreen=False,
+                                        color='red',
+                                        children=[
+                                            html.Div([
+                                                dcc.Graph(id='image', config={
+                                                    "displayModeBar": False,
+                                                })
+                                            ], className='img-graph')
+                                        ])
                         ]),
                         html.Div([
                             html.P(
@@ -295,27 +308,17 @@ class BackendUtilities(Dash):
                                     {'label': ' Cytoskeleton, Golgi apparatus and membrane',
                                      'value': 3},
                                     {'label': ' Mitochondrion',
-                                     'value': 4}
+                                     'value': 4},
                                 ],
                                 value=[1, 2, 3, 4],
                                 labelStyle={'display': 'block'}
                             ),
-
                         ], className='image-correction'),
                     ], width=6, lg=6, md=12),
                 ]),
-
-
-                     #  ], className='right-side',
-                     # ),
-
-
                 html.Div(id='div_table',
                          children=[])
-
             ], className='footer'),
-
-            # ])
         ], className='body', style={
             'background-color': '#ebebeb',
 

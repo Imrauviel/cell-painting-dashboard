@@ -5,7 +5,7 @@ from models.ImageModel import ImageModel
 import dash_bootstrap_components as dbc
 
 IMAGES = dict()
-IMAGE_DIR_PATH = r'C:\Users\Krul\Documents\GitHub\cell-painting-dashboard\data\processed\HepG2_Exp3_Plate1_FX9__2021-04-08T16_16_48'
+IMAGE_DIR_PATH = r'..\HepG2_Exp3_Plate1_FX9__2021-04-08T16_16_48'
 csv_data = pd.read_csv(r'../data/features.csv')
 for idx, image_info in csv_data.iterrows():
     # TODO dodać index
@@ -36,7 +36,7 @@ def get_selected_images(selected_points):
     Output('graph', 'figure'),
     Output('dropdown_image_1', 'value'),
     Output('dropdown_image_2', 'value'),
-    Output('image_info', 'children')
+    Output('image_info', 'children'),
 ]
     ,
     [Input('graph', 'clickData'),
@@ -44,7 +44,7 @@ def get_selected_images(selected_points):
      Input('dropdown_image_2', 'value'),
      Input('channel_list', 'value'),
      Input('gamma_slider', 'value'),
-     Input('dropdown_color_select', 'value')
+     Input('dropdown_color_select', 'value'),
      ]
 )
 def update_by_scatter(chosen_point, drop_1, drop_2, values, gamma, color_group):
@@ -59,8 +59,9 @@ def update_by_scatter(chosen_point, drop_1, drop_2, values, gamma, color_group):
 
         img1, img2, image_model_1, image_model_2 = app.get_images(first_image_cache, second_image_cache, values, gamma)
         fig = app.get_image_figure(img1, img2, image_model_1.file_name, image_model_2.file_name)
+
         scatter_plot = app.generate_scatter_figure(first_image_cache, second_image_cache, color_group)
-        return fig, scatter_plot, first_image_cache, second_image_cache, str(image_model_1)
+        return fig, scatter_plot, first_image_cache, second_image_cache, str(image_model_1),
     second_image_cache = drop_2
     first_image_cache = drop_1
     img1, img2, image_model_1, image_model_2 = app.get_images(drop_2, drop_1, values, gamma)
