@@ -1,11 +1,14 @@
-from dash import dcc, html
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+import dash_bootstrap_components as dbc
 import plotly.express as px
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import cv2
 
-IMAGE_DIR_PATH = r'../HepG2_Exp3_Plate1_FX9__2021-04-08T16_16_48'
+IMAGE_DIR_PATH = r'../processed/HepG2_Exp3_Plate1_FX9__2021-04-08T16_16_48'
 
 
 
@@ -136,43 +139,43 @@ layout = html.Div([
 
     ], className='navbar', id='navbar', style={}),
     html.Div([
-        html.Div([
-            dcc.Dropdown(
-                id='dropdown_image_1',
-                # options=create_options(data),
-                multi=False,
-                value=0,
-                placeholder="Select first image",
-                className='dropdown-image-1'
-            ),
-            dcc.Dropdown(
-                id='dropdown_image_2',
-                options=create_options(data),
-                multi=False,
-                value=1,
-                placeholder="Select second image",
-                className='dropdown-image-2'
-            )
-        ], className='dropdowns', style={}),
-        html.Div([
-            dcc.Graph(id='graph', config={
-                # "displayModeBar": False,
-            })
-        ], className='middle-side',  # style={'height': '500px',
-            # 'float': 'left',
-            # 'width': '50%'}
-        ),
-
+        dbc.Row([
+            dbc.Col([
+                html.Div([
+                    dcc.Graph(id='graph', config={
+                        # "displayModeBar": False,
+                    })
+                ], className='middle-side',),], md=12, lg=6),
+            dbc.Col([
+                html.Div([
+                    dcc.Dropdown(
+                        id='dropdown_image_1',
+                        # options=create_options(data),
+                        multi=False,
+                        value=0,
+                        placeholder="Select first image",
+                        className='dropdown-image-1'
+                    ),
+                    dcc.Dropdown(
+                        id='dropdown_image_2',
+                        options=create_options(data),
+                        multi=False,
+                        value=1,
+                        placeholder="Select second image",
+                        className='dropdown-image-2'
+                    )
+                ], className='dropdowns', style={}),], md=12, lg=6),
+                html.Div([
+                    html.Div([
+                        dcc.Graph(id='image', config={
+                            "displayModeBar": False,
+                        })
+                    ], className='img-graph')
+                ])
+            # dbc.Col([], md=6, lg=3),
+        ]),
     ], className='main_part', style={}),
-    html.Div([
-        html.Div([
-            dcc.Graph(id='image', config={
-                "displayModeBar": False,
-            })
-        ], className='img-graph')
 
-    ], className='right-side',
-    ),
     html.Div([dcc.Checklist(
         id='channel_list',
         options=[
