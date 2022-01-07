@@ -1,4 +1,5 @@
-from typing import List, Optional, Dict, Tuple
+import pickle
+from typing import List, Optional, Dict, Tuple, Set
 
 from dash import dash_table, html, dcc
 from dash.dash import Dash
@@ -7,12 +8,14 @@ import plotly.express as px
 import numpy as np
 import pandas as pd
 import cv2
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, AgglomerativeClustering
 
 import dash_bootstrap_components as dbc
 from PIL import Image
 
 from models.ImageModel import ImageModel
+
+FEATURES_PKL = r'../data/features_dict.pkl'
 
 
 class BackendUtilities(Dash):
@@ -22,6 +25,7 @@ class BackendUtilities(Dash):
         self._image_dir_path: str = path
         self._csv_data: pd.DataFrame = csv_data
         self._csv_data['Concentration'] = self._csv_data['Concentration'].astype(str)
+        self._features: Optional[dict] = None
 
     def merge_images2(self, values: List[int], image_model: ImageModel) -> np.array:
         channels = []
@@ -40,7 +44,7 @@ class BackendUtilities(Dash):
     def generate_scatter_figure(self, point_index_1=0, point_index_2=1, color_by_group='None') -> go.Figure:
         if color_by_group != 'None':
             if isinstance(color_by_group, int):
-                color_by_group = self._get_k_means(color_by_group)
+                color_by_group = self._get_clusters(color_by_group)
             figure = px.scatter(self._csv_data,
                                 x='Vector1',
                                 y='Vector2',
@@ -107,13 +111,13 @@ class BackendUtilities(Dash):
 
     @staticmethod
     def get_image_figure(image_1: np.array, image_2: np.array, name_1: str, name_2: str):
-        fig = px.imshow(np.array([image_1, image_2]), facet_col=0, binary_string=True,
-                        facet_col_spacing=0.02, width=800, height=400, labels={'facet_col': 'Image'},
+        fig = px.imshow(np.array([image_1, image_2]), facet_col=0,  # binary_string=True,
+                        facet_col_spacing=0.02, width=800, height=400,
                         )
         fig.update_xaxes(showticklabels=False).update_yaxes(showticklabels=False)
         fig.update_traces(hovertemplate=None, hoverinfo='skip')
-        fig.layout.annotations[0]['text'] = f'Image: {name_1}'
-        fig.layout.annotations[1]['text'] = f'Image: {name_2}'
+        fig.layout.annotations[0]['text'] = ""
+        fig.layout.annotations[1]['text'] = ""
         fig.update_layout(
             plot_bgcolor='#f2f2f2',
             font_family='Courier New',
@@ -141,18 +145,20 @@ class BackendUtilities(Dash):
                             'value': idx_value})
         return options
 
-    def _get_k_means(self, n_clusters: int) -> Optional[List[str]]:
+    def _get_clusters(self, n_clusters: int) -> Optional[List[str]]:
+        if not self._features:
+            file = open(FEATURES_PKL, "rb")
+            self._features = pickle.load(file)
+            file.close()
         if n_clusters:
-            model = KMeans(n_clusters=n_clusters)
-            X = [[float(x), float(y)] for x, y in zip(self._csv_data['Vector1'], self._csv_data['Vector2'])]
-            results = model.fit(X=X)
+            model = AgglomerativeClustering(n_clusters=n_clusters)
+            results = model.fit(X=[i.tolist()[0] for i in self._features.values()])
             return [str(i) for i in results.labels_]
 
     @staticmethod
     def _adjust_gamma(image: np.array, gamma: int = 0) -> np.array:
         if gamma == 0:
             return image
-        # image = (255 * image).astype("uint8")
         inv_gamma = 1.0 / gamma
         table = np.array([((i / 255.0) ** inv_gamma) * 255
                           for i in np.arange(0, 256)]).astype("uint8")
@@ -166,17 +172,17 @@ class BackendUtilities(Dash):
                       'concentration']],
             export_format="csv",
             sort_action='native',
-            # sort_mode='multi',
-            # page_current=0,
-            # page_size=10,
-            filter_action="native",
-
         )
         if selected_points:
-            # TODO wywalić powtorzenia
             selected_points = selected_points['points']
             objects: List[dict] = [self.images[self.get_index(image)].__dict__ for image in selected_points]
-            table.data = objects
+            names_of_objects: Set[str] = list(set(image['file_name'] for image in objects))
+            result: List[dict] = []
+            for obj in objects:
+                if obj['file_name'] in names_of_objects:
+                    result.append(obj)
+                    names_of_objects.remove(obj['file_name'])
+            table.data = result
         return table
 
     def get_index(self, chosen_point: dict) -> Optional[int]:
@@ -187,12 +193,6 @@ class BackendUtilities(Dash):
 
     def set_layout(self):
         layout = html.Div([
-            # dcc.Loading(id='main_loading',
-            #                            type='graph',
-            #                            fullscreen=True,
-            #                            color='red',
-            #                            debug=False,
-            #                            children=[
 
             html.Div([
 
@@ -249,7 +249,8 @@ class BackendUtilities(Dash):
                                 multi=False,
                                 value=0,
                                 placeholder="Select first image",
-                                className='dropdown-image-1'
+                                className='dropdown-image-1',
+                                clearable=False
                             ),
                             dcc.Dropdown(
                                 id='dropdown_image_2',
@@ -257,7 +258,8 @@ class BackendUtilities(Dash):
                                 multi=False,
                                 value=1,
                                 placeholder="Select second image",
-                                className='dropdown-image-2'
+                                className='dropdown-image-2',
+                                clearable=False
                             )
                         ], className='dropdowns', style={}),
                         html.Div([
@@ -290,12 +292,12 @@ class BackendUtilities(Dash):
                             dcc.Slider(
                                 id='gamma_slider',
                                 min=0,
-                                max=2,
+                                max=1,
                                 step=0.05,
-                                value=0,
-                                updatemode='drag',
-                                tooltip={"placement": "bottom",
-                                         "always_visible": False},
+                                value=0.5,
+                                updatemode='mouseup',  # optional drag
+                                tooltip={"placement": "right",
+                                         "always_visible": True},
                             ),
                             # title VISABLE CHannells
                             dcc.Checklist(

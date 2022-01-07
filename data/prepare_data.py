@@ -77,14 +77,14 @@ def prepare_info_df(df):
 
 parser = argparse.ArgumentParser(
     description='Generating vectors of features.')
-parser.add_argument('-f', '--features', action='store_true', default=False,
+parser.add_argument('-f', '--features',  # action='store_true', default=False,
                     help='Load base feature vectors.')
 parser.add_argument('-s', '--save-base-features', action='store_true', default=False,
                     help='Save based features ot file.')
 parser.add_argument('-o', '--out', default='features',
                     help='Name of output file.')
-parser.add_argument('-fp', '--features-path',
-                    help='path to base features.')
+# parser.add_argument('-fp', '--features-path',
+#                     help='path to base features.')
 parser.add_argument('-p', '--path',
                     help='path to directory of images.')
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     if not args.features:
         features_dict = generate_base_features(args.path)
     else:
-        file = open(args.features_path, "rb")
+        file = open(args.features, "rb")
         features_dict = pickle.load(file)
     result: pd.DataFrame = features_preprocess(features_dict)
 
