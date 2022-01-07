@@ -8,7 +8,7 @@ import plotly.express as px
 import numpy as np
 import pandas as pd
 import cv2
-from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.cluster import AgglomerativeClustering
 
 import dash_bootstrap_components as dbc
 from PIL import Image

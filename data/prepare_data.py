@@ -13,8 +13,6 @@ import umap
 
 import argparse
 
-PATH = r'C:\Users\a829748\Studia\cell-painting-dashboard\resized_merged_images'
-
 
 def extract_features(file: str, model: Model):
     img = load_img(file, target_size=(224, 224))
@@ -77,14 +75,12 @@ def prepare_info_df(df):
 
 parser = argparse.ArgumentParser(
     description='Generating vectors of features.')
-parser.add_argument('-f', '--features',  # action='store_true', default=False,
+parser.add_argument('-f', '--features', default=None,
                     help='Load base feature vectors.')
 parser.add_argument('-s', '--save-base-features', action='store_true', default=False,
                     help='Save based features ot file.')
 parser.add_argument('-o', '--out', default='features',
                     help='Name of output file.')
-# parser.add_argument('-fp', '--features-path',
-#                     help='path to base features.')
 parser.add_argument('-p', '--path',
                     help='path to directory of images.')
 
