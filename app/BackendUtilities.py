@@ -1,7 +1,10 @@
 import pickle
 from typing import List, Optional, Dict, Tuple, Set
 
-from dash import dash_table, html, dcc
+# from dash import dash_table, html, dcc
+import dash_table
+import dash_core_components as dcc
+import dash_html_components as html
 from dash.dash import Dash
 import plotly.graph_objects as go
 import plotly.express as px
