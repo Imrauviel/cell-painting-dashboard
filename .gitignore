@@ -87,6 +87,3 @@ target/
 
 # Mypy cache
 .mypy_cache/
-notebooks/Group 1 model testing.ipynb
-notebooks/resnet18_features.csv
-notebooks/vgg16_features.csv
