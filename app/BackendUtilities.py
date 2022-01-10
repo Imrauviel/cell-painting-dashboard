@@ -92,7 +92,7 @@ class BackendUtilities(Dash):
             mode='markers',
             hovertext=[self._csv_data['Name'][point_index_2]],
             name='Image 1',
-            marker=dict(size=12,
+            marker=dict(size=20,
                         color='#ffffff',
                         line=dict(width=3,
                                   color='#000000')
@@ -104,7 +104,7 @@ class BackendUtilities(Dash):
             mode='markers',
             hovertext=[self._csv_data['Name'][point_index_2]],
             name='Image 2',
-            marker=dict(size=12,
+            marker=dict(size=20,
                         color='#f7ff0a',
                         line=dict(width=3,
                                   color='#000000')

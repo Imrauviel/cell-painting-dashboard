@@ -1,11 +1,11 @@
 from typing import List
-
+from tqdm import tqdm
+import cv2
 from keras.models import Model
-from keras.preprocessing.image import load_img
-from keras.applications.vgg16 import preprocess_input
+from keras.applications.vgg19 import preprocess_input
 import numpy as np
 import os
-from models.extract_features import Vgg16Features
+from models.extract_features import create_model
 from sklearn.decomposition import PCA
 import pandas as pd
 import pickle
@@ -15,10 +15,18 @@ import argparse
 
 
 def extract_features(file: str, model: Model):
-    img = load_img(file, target_size=(224, 224))
-    img = np.array(img)
-    tensor_img = img.reshape(1, 224, 224, 3)
-    preprocessed_img = preprocess_input(tensor_img)
+    # print(file)
+    path_df = []
+    for ch in range(1, 5):
+        path_df.append(file.replace('ch1', f'ch{ch}'))
+    c,m,y,k = [cv2.resize(cv2.imread(path, cv2.IMREAD_GRAYSCALE), (224, 224), cv2.INTER_LANCZOS4) for path in path_df]
+    image = np.array([np.stack((c, m, y, k), axis=2)])
+    image = preprocess_input(image)
+
+    # img = load_img(file, target_size=(224, 224))
+    # img = np.array(img)
+    # tensor_img = img.reshape(1, 224, 224, 3)
+    preprocessed_img = preprocess_input(image)
     features = model.predict(preprocessed_img, use_multiprocessing=True)
     return features
 
@@ -33,11 +41,13 @@ def load_data(path: str) -> List[str]:
     return images
 
 
-def generate_base_features(path: str) -> dict:
+def generate_base_features(path: str, model) -> dict:
     features_dict = {}
     images = load_data(path)
-    for cell in images:
-        feat = extract_features(cell, Vgg16Features)
+    images = [i for i in images if 'ch1' in i]
+
+    for cell in tqdm(images):
+        feat = extract_features(cell, model)
         features_dict[cell] = feat
     if args.save_base_features:
         a_file = open("features_dict.pkl", "wb")
@@ -63,10 +73,10 @@ def prepare_info_df(df):
     df['Column'] = df['Name'].apply(lambda x: x[4:6])
     df['F'] = df['Name'].apply(lambda x: x[7:9])
     df['Well'] = df['Row'] + df['Column']
-    for cahnel_str in ['ch1', 'ch2', 'ch3', 'ch4']:  # here comes the problem
-        df['Name'] = df['Name'].apply(lambda x: x.replace(cahnel_str, ''))
+    for channel_str in ['ch1', 'ch2', 'ch3', 'ch4']:  # here comes the problem
+        df['Name'] = df['Name'].apply(lambda x: x.replace(channel_str, ''))
     df = df.drop_duplicates()
-    well_df = pd.read_csv(r'C:\Users\a829748\Studia\cell-painting-dashboard\data\CellPainting-info.csv',
+    well_df = pd.read_csv(args.path_info,
                           usecols=[0, 1, 2])
     df = df.merge(well_df)
     df.rename(columns={'Concentration [uM]': 'Concentration'}, inplace=True)
@@ -82,12 +92,16 @@ parser.add_argument('-s', '--save-base-features', action='store_true', default=F
 parser.add_argument('-o', '--out', default='features',
                     help='Name of output file.')
 parser.add_argument('-p', '--path',
-                    help='path to directory of images.')
+                    help='Path to directory of images.')
+parser.add_argument('-pinfo', '--path-info',
+                    help='Path to additional csv.')
 
 if __name__ == '__main__':
     args = parser.parse_args()
+    print(args.path_info)
+    model = create_model()
     if not args.features:
-        features_dict = generate_base_features(args.path)
+        features_dict = generate_base_features(args.path, model)
     else:
         file = open(args.features, "rb")
         features_dict = pickle.load(file)

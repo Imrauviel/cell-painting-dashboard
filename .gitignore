@@ -87,3 +87,5 @@ target/
 
 # Mypy cache
 .mypy_cache/
+notebooks/resnet18_features.csv
+notebooks/vgg16_features.csv
