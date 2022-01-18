@@ -44,8 +44,8 @@ def load_data(path: str) -> List[str]:
 def generate_base_features(path: str, model) -> dict:
     features_dict = {}
     images = load_data(path)
-    images = [i for i in images if 'ch1' in i]
-
+    images = [i for i in images if 'ch1' in i and ('f01' in i or 'f04' in i or 'f07' in i)]
+    print(len(images))
     for cell in tqdm(images):
         feat = extract_features(cell, model)
         features_dict[cell] = feat
@@ -60,10 +60,10 @@ def features_preprocess(features_dict: dict):
     filenames = np.array(list(features_dict.keys()))
     feat = np.array(list(features_dict.values()))
     feat = feat.reshape(-1, 4096)
-    pca = PCA(n_components=100, random_state=22)
-    pca.fit(feat)
-    data_after_pca = pca.transform(feat)
-    standard_embedding = umap.UMAP(random_state=42).fit_transform(data_after_pca)
+    # pca = PCA(n_components=100, random_state=22)
+    # pca.fit(feat)
+    # data_after_pca = pca.transform(feat)
+    standard_embedding = umap.UMAP(random_state=42).fit_transform(feat)
 
     return pd.DataFrame({'Name': filenames, 'Vector1': standard_embedding[:, 0], 'Vector2': standard_embedding[:, 1]})
 
@@ -113,3 +113,6 @@ if __name__ == '__main__':
         result.to_csv(f'{args.out}.csv', index=False)
     else:
         result.to_csv('features.csv', index=False)
+
+#-f
+#C:\Users\Krul\Documents\GitHub\cell-painting-dashboard\data\features_dict.pkl
