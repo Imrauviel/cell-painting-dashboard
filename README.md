@@ -34,4 +34,4 @@ As long as we take only these images, where a high concentration of compound was
 
 - We too late learned that we could do something named latent space adaptation. And this is gas. And if we return, we should beg from this.
 
-![](./reports/figures/latent.PNG)
+![](./reports/figures/latent.png)
